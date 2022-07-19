@@ -1,0 +1,24 @@
+apiVersion: scs.community/v1alpha1
+kind: Cluster
+metadata:
+  name: example-cluster
+spec:
+  addons:
+    nginxIngress:
+      enabled: true
+    certManager:
+      enabled: true
+    metricsServer:
+      enabled: true
+    harbor:
+      enabled: false
+    flux:
+      enabled: false
+  kubernetes:
+    version: v1.24.0-rc.1
+  provider:
+    providerType: hcloud
+  workers:
+    - name: wg1
+      flavor: cpx31
+      count: 3

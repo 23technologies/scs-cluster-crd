@@ -1,0 +1,95 @@
+apiVersion: apiextensions.k8s.io/v1
+kind: CustomResourceDefinition
+metadata:
+  # name must match the spec fields below, and be in the form: <plural>.<group>
+  name: clusters.scs.community
+spec:
+  # group name to use for REST API: /apis/<group>/<version>
+  group: scs.community
+  # list of versions supported by this CustomResourceDefinition
+  # either Namespaced or Cluster
+  scope: Namespaced
+  names:
+    # plural name to be used in the URL: /apis/<group>/<version>/<plural>
+    plural: clusters
+    # singular name to be used as an alias on the CLI and for display
+    singular: cluster
+    # kind is normally the CamelCased singular type. Your resource manifests use this.
+    kind: Cluster
+    # shortNames allow shorter string to match your resource on the CLI
+    shortNames:
+    - c
+  versions:
+    - name: v1alpha1
+      # Each version can be enabled/disabled by Served flag.
+      served: true
+      # One and only one version must be marked as the storage version.
+      storage: true
+      schema:
+        openAPIV3Schema:
+          type: object
+          properties:
+            spec:
+              type: object
+              properties:
+                addons:
+                  type: object
+                  properties:
+                    nginxIngress:
+                      type: object
+                      properties:
+                        enabled:
+                          type: boolean
+                    certManager:
+                      type: object
+                      properties:
+                        enabled:
+                          type: boolean
+                    flux:
+                      type: object
+                      properties:
+                        enabled:
+                          type: boolean
+                    metricsServer:
+                      type: object
+                      properties:
+                        enabled:
+                          type: boolean
+                    harbor:
+                      type: object
+                      properties:
+                        enabled:
+                          type: boolean
+                kubernetes:
+                  type: object
+                  properties:
+                    version:
+                      type: string
+                      pattern: ^v?(?P<major>0|[1-9]\d*)\.(?P<minor>0|[1-9]\d*)\.(?P<patch>x|0|[1-9]\d*)(?:-(?P<prerelease>(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*)(?:\.(?:0|[1-9]\d*|\d*[a-zA-Z-][0-9a-zA-Z-]*))*))?(?:\+(?P<buildmetadata>[0-9a-zA-Z-]+(?:\.[0-9a-zA-Z-]+)*))?$
+                provider:
+                  type: object
+                  properties:
+                    providerType:
+                      type: string
+                workers:
+                  type: array
+                  items:
+                    type: object
+                    properties:
+                      name:
+                        type: string
+                      flavor:
+                        type: string
+                      count:
+                        type: integer
+                        minimum: 1
+      additionalPrinterColumns:
+        - name: k8s-version
+          type: string
+          jsonPath: .spec.kubernetes.version
+        - name: Provider
+          type: string
+          jsonPath: .spec.provider.providerType
+        - name: Ingress
+          type: boolean
+          jsonPath: .spec.addons.nginxIngress.enabled
