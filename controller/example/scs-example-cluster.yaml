@@ -1,0 +1,7 @@
+apiVersion: scs.community.my.domain/v1alpha1
+kind: Cluster
+metadata:
+  name: example-cluster
+spec:
+  kubernetes:
+    version: v1.24.0-rc.1

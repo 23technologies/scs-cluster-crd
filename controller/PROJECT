@@ -1,0 +1,16 @@
+domain: my.domain
+layout:
+- go.kubebuilder.io/v3
+projectName: controller
+repo: scs.community/v1alpha1
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: my.domain
+  group: scs.community
+  kind: Cluster
+  path: scs.community/v1alpha1/api/v1alpha1
+  version: v1alpha1
+version: "3"
