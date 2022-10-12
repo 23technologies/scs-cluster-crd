@@ -18,12 +18,14 @@ package controllers
 
 import (
 	"context"
+	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 	"sigs.k8s.io/controller-runtime/pkg/log"
 
 	k8sv1alpha1 "github.com/23technologies/scs-cluster-crd/gardener-controller/api/v1alpha1"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 )
 
 // ClusterReconciler reconciles a Cluster object
@@ -48,6 +50,7 @@ type ClusterReconciler struct {
 func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
 	var myCluster k8sv1alpha1.Cluster
+	var myShoot gardencorev1beta1.Shoot
 	err := r.Get(ctx, req.NamespacedName, &myCluster)
 
 	if err != nil {
@@ -56,6 +59,13 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 	// Successfully retrieved cluster-object
 	ctrl.Log.Info("Received new Cluster-Event: " + myCluster.Name + " k8s-version: " + myCluster.Spec.Kubernetes.Version)
+
+	myShoot = gardencorev1beta1.Shoot{
+		ObjectMeta: metav1.ObjectMeta{
+			Name: myCluster.Name,
+		},
+	}
+	ctrl.Log.Info(myShoot.ObjectMeta.Name)
 
 	return ctrl.Result{}, nil
 }
