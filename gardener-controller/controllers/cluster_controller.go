@@ -18,7 +18,6 @@ package controllers
 
 import (
 	"context"
-
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
@@ -48,8 +47,15 @@ type ClusterReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.13.0/pkg/reconcile
 func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
+	var myCluster k8sv1alpha1.Cluster
+	err := r.Get(ctx, req.NamespacedName, &myCluster)
 
-	// TODO(user): your logic here
+	if err != nil {
+		ctrl.Log.Error(err, "Problem")
+		return ctrl.Result{}, client.IgnoreNotFound(err)
+	}
+	// Successfully retrieved cluster-object
+	ctrl.Log.Info("Received new Cluster-Event: " + myCluster.Name + " k8s-version: " + myCluster.Spec.Kubernetes.Version)
 
 	return ctrl.Result{}, nil
 }
