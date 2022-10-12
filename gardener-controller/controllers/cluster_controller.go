@@ -19,14 +19,16 @@ package controllers
 import (
 	"context"
 	"fmt"
+	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
+	"sigs.k8s.io/controller-runtime/pkg/event"
 	"sigs.k8s.io/controller-runtime/pkg/log"
+	"sigs.k8s.io/controller-runtime/pkg/predicate"
 
 	k8sv1alpha1 "github.com/23technologies/scs-cluster-crd/gardener-controller/api/v1alpha1"
-	gardencorev1beta1 "github.com/gardener/gardener/pkg/apis/core/v1beta1"
 )
 
 // ClusterReconciler reconciles a Cluster object
@@ -50,6 +52,7 @@ type ClusterReconciler struct {
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.13.0/pkg/reconcile
 func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	_ = log.FromContext(ctx)
+
 	var myCluster k8sv1alpha1.Cluster
 	var myShoot gardencorev1beta1.Shoot
 	err := r.Get(ctx, req.NamespacedName, &myCluster)
@@ -60,7 +63,6 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	}
 	// Successfully retrieved cluster-object
 	ctrl.Log.Info("Received new Cluster-Event: " + myCluster.Name + " k8s-version: " + myCluster.Spec.Kubernetes.Version)
-
 	labels := make(map[string]string)
 	labels["networking.extensions.gardener.cloud/calico"] = "true"
 	myMachineVersion := "20.4.20210616"
@@ -83,7 +85,7 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			Provider: gardencorev1beta1.Provider{
 				Type: "hcloud",
 				Workers: []gardencorev1beta1.Worker{
-					gardencorev1beta1.Worker{
+					{
 						Name:    "wg1",
 						Minimum: 2,
 						Maximum: 4,
@@ -104,19 +106,11 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 			Kubernetes: gardencorev1beta1.Kubernetes{Version: myCluster.Spec.Kubernetes.Version},
 		},
 	}
-
 	err = r.Create(ctx, &myShoot)
 	if err != nil {
 		ctrl.Log.Error(err, "Problem while creating shoot")
 	}
 
-	var myList gardencorev1beta1.ShootList
-	err = r.List(ctx, &myList)
-	if err != nil {
-		ctrl.Log.Error(err, "Problem while retrieving shoots")
-		return ctrl.Result{}, err
-	}
-	fmt.Println(myList)
 	return ctrl.Result{}, nil
 }
 
@@ -124,5 +118,28 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 func (r *ClusterReconciler) SetupWithManager(mgr ctrl.Manager) error {
 	return ctrl.NewControllerManagedBy(mgr).
 		For(&k8sv1alpha1.Cluster{}).
+		WithEventFilter(predicate.Funcs{
+			UpdateFunc: func(e event.UpdateEvent) bool {
+
+				oldGeneration := e.ObjectOld.GetGeneration()
+				newGeneration := e.ObjectNew.GetGeneration()
+				// Generation is only updated on spec changes (also on deletion),
+				// not metadata or status
+				// Filter out events where the generation hasn't changed to
+				// avoid being triggered by status updates
+				if oldGeneration == newGeneration {
+					fmt.Println("metadata or status change")
+					return false
+				}
+				return true
+			},
+			DeleteFunc: func(e event.DeleteEvent) bool {
+				// The reconciler adds a finalizer, so we perform clean-up
+				// when the delete timestamp is added
+				// Suppress Delete events to avoid filtering them out in the Reconcile function
+				fmt.Println("delete event")
+				return false
+			},
+		}).
 		Complete(r)
 }
