@@ -9,4 +9,5 @@ metadata:
     app.kubernetes.io/created-by: gardener-controller
   name: cluster-sample
 spec:
-  # TODO(user): Add fields here
+  kubernetes:
+    version: v1.25.2
