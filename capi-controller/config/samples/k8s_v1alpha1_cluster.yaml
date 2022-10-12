@@ -1,0 +1,13 @@
+apiVersion: k8s.scs.community/v1alpha1
+kind: Cluster
+metadata:
+  labels:
+    app.kubernetes.io/name: cluster
+    app.kubernetes.io/instance: cluster-sample
+    app.kubernetes.io/part-of: gardener-controller
+    app.kuberentes.io/managed-by: kustomize
+    app.kubernetes.io/created-by: gardener-controller
+  name: cluster-sample
+spec:
+  kubernetes:
+    version: v1.25.2
