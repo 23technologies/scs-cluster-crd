@@ -18,6 +18,7 @@ package controllers
 
 import (
 	"context"
+	"fmt"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -62,11 +63,23 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 
 	myShoot = gardencorev1beta1.Shoot{
 		ObjectMeta: metav1.ObjectMeta{
-			Name: myCluster.Name,
+			Name:      myCluster.Name,
+			Namespace: myCluster.Namespace,
 		},
 	}
-	ctrl.Log.Info(myShoot.ObjectMeta.Name)
 
+	err = r.Create(ctx, &myShoot)
+	if err != nil {
+		ctrl.Log.Error(err, "Problem while creating shoot")
+	}
+
+	var myList gardencorev1beta1.ShootList
+	err = r.List(ctx, &myList)
+	if err != nil {
+		ctrl.Log.Error(err, "Problem while retrieving shoots")
+		return ctrl.Result{}, err
+	}
+	fmt.Println(myList)
 	return ctrl.Result{}, nil
 }
 
