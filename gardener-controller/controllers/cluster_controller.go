@@ -61,10 +61,47 @@ func (r *ClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ct
 	// Successfully retrieved cluster-object
 	ctrl.Log.Info("Received new Cluster-Event: " + myCluster.Name + " k8s-version: " + myCluster.Spec.Kubernetes.Version)
 
+	labels := make(map[string]string)
+	labels["networking.extensions.gardener.cloud/calico"] = "true"
+	myMachineVersion := "20.4.20210616"
+	myArchitecture := "amd64"
+	myNodes := "10.250.0.0/16"
 	myShoot = gardencorev1beta1.Shoot{
 		ObjectMeta: metav1.ObjectMeta{
 			Name:      myCluster.Name,
 			Namespace: myCluster.Namespace,
+			Labels:    labels,
+		},
+		Spec: gardencorev1beta1.ShootSpec{
+			CloudProfileName:  "hcloud",
+			SecretBindingName: "hcloud-secret",
+			Networking: gardencorev1beta1.Networking{
+				Type:  "calico",
+				Nodes: &myNodes,
+			},
+			Region: "hel1",
+			Provider: gardencorev1beta1.Provider{
+				Type: "hcloud",
+				Workers: []gardencorev1beta1.Worker{
+					gardencorev1beta1.Worker{
+						Name:    "wg1",
+						Minimum: 2,
+						Maximum: 4,
+						SystemComponents: &gardencorev1beta1.WorkerSystemComponents{
+							Allow: true,
+						},
+						Machine: gardencorev1beta1.Machine{
+							Type:         "cpx31",
+							Architecture: &myArchitecture,
+							Image: &gardencorev1beta1.ShootMachineImage{
+								Name:    "ubuntu",
+								Version: &myMachineVersion,
+							},
+						},
+					},
+				},
+			},
+			Kubernetes: gardencorev1beta1.Kubernetes{Version: myCluster.Spec.Kubernetes.Version},
 		},
 	}
 
