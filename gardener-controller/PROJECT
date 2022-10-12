@@ -1,0 +1,16 @@
+domain: scs.community
+layout:
+- go.kubebuilder.io/v3
+projectName: gardener-controller
+repo: github.com/23technologies/scs-cluster-crd/gardener-controller
+resources:
+- api:
+    crdVersion: v1
+    namespaced: true
+  controller: true
+  domain: scs.community
+  group: k8s
+  kind: Cluster
+  path: github.com/23technologies/scs-cluster-crd/gardener-controller/api/v1alpha1
+  version: v1alpha1
+version: "3"
